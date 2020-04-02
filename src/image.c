@@ -238,7 +238,7 @@ void draw_bbox(image a, box bbox, int w, float r, float g, float b)
     int right = (bbox.x+bbox.w/2)*a.w;
     int top   = (bbox.y-bbox.h/2)*a.h;
     int bot   = (bbox.y+bbox.h/2)*a.h;
-
+printf("Bounding Box: Left=%d, Top=%d, Right=%d, Bottom=%d\n", left, top, right, bot);
     int i;
     for(i = 0; i < w; ++i){
         draw_box(a, left+i, top+i, right-i, bot-i, r, g, b);
@@ -317,10 +317,36 @@ void draw_detections_v3(image im, detection *dets, int num, float thresh, char *
 
     // text output
     qsort(selected_detections, selected_detections_num, sizeof(*selected_detections), compare_by_lefts);
+
+
+    // for saving bounding box coordinates
+    FILE* file_out;
+    char file_out_str[30] = "detections/detections.txt";
+    file_out = fopen(file_out_str, "a");
+
+
     int i;
     for (i = 0; i < selected_detections_num; ++i) {
         const int best_class = selected_detections[i].best_class;
         printf("%s: %.0f%%", names[best_class],    selected_detections[i].det.prob[best_class] * 100);
+
+        // print bounding box coordinates
+        printf("\t(left_x: %4.0f   top_y: %4.0f   width: %4.0f   height: %4.0f)-",
+                round((selected_detections[i].det.bbox.x - selected_detections[i].det.bbox.w / 2)*im.w),
+                round((selected_detections[i].det.bbox.y - selected_detections[i].det.bbox.h / 2)*im.h),
+                round(selected_detections[i].det.bbox.w*im.w), round(selected_detections[i].det.bbox.h*im.h));
+
+        // save bounding box coordinates to a file
+        fprintf(file_out,"%s: %.0f%%", names[best_class], selected_detections[i].det.prob[best_class] * 100);
+        fprintf(file_out," (left_x:%4.0f,top_y:%4.0f,right_x:%4.0f,bottom_y:%4.0f)-",
+                round((selected_detections[i].det.bbox.x - selected_detections[i].det.bbox.w / 2)*im.w),
+                round((selected_detections[i].det.bbox.y - selected_detections[i].det.bbox.h / 2)*im.h),
+                round((selected_detections[i].det.bbox.x + selected_detections[i].det.bbox.w / 2)*im.w),
+                round((selected_detections[i].det.bbox.y + selected_detections[i].det.bbox.h / 2)*im.h),
+        );
+    
+
+
         if (ext_output)
             printf("\t(left_x: %4.0f   top_y: %4.0f   width: %4.0f   height: %4.0f)\n",
                 round((selected_detections[i].det.bbox.x - selected_detections[i].det.bbox.w / 2)*im.w),
@@ -343,6 +369,15 @@ void draw_detections_v3(image im, detection *dets, int num, float thresh, char *
             }
         }
     }
+
+    // after detection is done for an image get to a new line and close the file
+    fprintf(file_out, "%s", "\n");
+    fclose(file_out);
+
+
+
+
+
 
     // image output
     qsort(selected_detections, selected_detections_num, sizeof(*selected_detections), compare_by_probs);
@@ -382,6 +417,23 @@ void draw_detections_v3(image im, detection *dets, int num, float thresh, char *
             if (right > im.w - 1) right = im.w - 1;
             if (top < 0) top = 0;
             if (bot > im.h - 1) bot = im.h - 1;
+
+/*
+
+    FILE* zaaaout;
+    char str[50] = "detections/aaaaaaaaaa";
+    char snum[5];
+
+    snprintf(snum, sizeof(snum), "%d", i);
+
+    strcat(str, snum);
+    strcat(str, ".txt");
+
+    zaaaout = fopen(str, "a");
+    fprintf(zaaaout,"Bounding Box v3: Left=%d, Top=%d, Right=%d, Bottom=%d\n", left, top, right, bot);
+    fprintf(zaaaout, "%s", "\n");
+    fclose(zaaaout);
+*/
 
             //int b_x_center = (left + right) / 2;
             //int b_y_center = (top + bot) / 2;
@@ -486,7 +538,7 @@ void draw_detections(image im, int num, float thresh, box *boxes, float **probs,
             if(top < 0) top = 0;
             if(bot > im.h-1) bot = im.h-1;
             printf("%s: %.0f%%", names[class_id], prob * 100);
-
+printf("Bounding Box v1: Left=%d, Top=%d, Right=%d, Bottom=%d\n", left, top, right, bot);
             //printf(" - id: %d, x_center: %d, y_center: %d, width: %d, height: %d",
             //    class_id, (right + left) / 2, (bot - top) / 2, right - left, bot - top);
 
@@ -495,7 +547,8 @@ void draw_detections(image im, int num, float thresh, box *boxes, float **probs,
             if (alphabet) {
                 image label = get_label(alphabet, names[class_id], (im.h*.03)/10);
                 draw_label(im, top + width, left, label, rgb);
-            }
+            
+		}
         }
     }
 }
@@ -1303,7 +1356,7 @@ float bilinear_interpolate(image im, float x, float y, int c)
     return val;
 }
 
-void quantize_image(image im)
+image quantize_image(image im)
 {
     int size = im.c * im.w * im.h;
     int i;
