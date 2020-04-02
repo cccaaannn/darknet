@@ -238,7 +238,7 @@ void draw_bbox(image a, box bbox, int w, float r, float g, float b)
     int right = (bbox.x+bbox.w/2)*a.w;
     int top   = (bbox.y-bbox.h/2)*a.h;
     int bot   = (bbox.y+bbox.h/2)*a.h;
-printf("Bounding Box: Left=%d, Top=%d, Right=%d, Bottom=%d\n", left, top, right, bot);
+
     int i;
     for(i = 0; i < w; ++i){
         draw_box(a, left+i, top+i, right-i, bot-i, r, g, b);
@@ -342,7 +342,7 @@ void draw_detections_v3(image im, detection *dets, int num, float thresh, char *
                 round((selected_detections[i].det.bbox.x - selected_detections[i].det.bbox.w / 2)*im.w),
                 round((selected_detections[i].det.bbox.y - selected_detections[i].det.bbox.h / 2)*im.h),
                 round((selected_detections[i].det.bbox.x + selected_detections[i].det.bbox.w / 2)*im.w),
-                round((selected_detections[i].det.bbox.y + selected_detections[i].det.bbox.h / 2)*im.h),
+                round((selected_detections[i].det.bbox.y + selected_detections[i].det.bbox.h / 2)*im.h)
         );
     
 
@@ -538,7 +538,7 @@ void draw_detections(image im, int num, float thresh, box *boxes, float **probs,
             if(top < 0) top = 0;
             if(bot > im.h-1) bot = im.h-1;
             printf("%s: %.0f%%", names[class_id], prob * 100);
-printf("Bounding Box v1: Left=%d, Top=%d, Right=%d, Bottom=%d\n", left, top, right, bot);
+
             //printf(" - id: %d, x_center: %d, y_center: %d, width: %d, height: %d",
             //    class_id, (right + left) / 2, (bot - top) / 2, right - left, bot - top);
 
@@ -547,8 +547,7 @@ printf("Bounding Box v1: Left=%d, Top=%d, Right=%d, Bottom=%d\n", left, top, rig
             if (alphabet) {
                 image label = get_label(alphabet, names[class_id], (im.h*.03)/10);
                 draw_label(im, top + width, left, label, rgb);
-            
-		}
+            }
         }
     }
 }
@@ -1356,7 +1355,7 @@ float bilinear_interpolate(image im, float x, float y, int c)
     return val;
 }
 
-image quantize_image(image im)
+void quantize_image(image im)
 {
     int size = im.c * im.w * im.h;
     int i;
