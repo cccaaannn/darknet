@@ -307,6 +307,18 @@ int compare_by_probs(const void *a_ptr, const void *b_ptr) {
     return delta < 0 ? -1 : delta > 0 ? 1 : 0;
 }
 
+
+//saving detections to same named file
+FILE* save_file_out;
+void draw_and_save_detections(image im, detection *dets, int num, float thresh, char **names, image **alphabet, int classes, int ext_output, char *only_the_filename)
+{
+    char file_out_str[50] = "detections/";
+    strcat(file_out_str, only_the_filename);
+    strcat(file_out_str, ".txt");
+    save_file_out = fopen(file_out_str, "w");
+    draw_detections_v3(im, dets, num, thresh, names, alphabet, classes, ext_output);
+}
+
 void draw_detections_v3(image im, detection *dets, int num, float thresh, char **names, image **alphabet, int classes, int ext_output)
 {
     static int frame_id = 0;
@@ -319,7 +331,7 @@ void draw_detections_v3(image im, detection *dets, int num, float thresh, char *
     qsort(selected_detections, selected_detections_num, sizeof(*selected_detections), compare_by_lefts);
 
 
-    // for saving bounding box coordinates
+    //for saving bounding box coordinates to detections.txt
     FILE* file_out;
     char file_out_str[30] = "detections/detections.txt";
     file_out = fopen(file_out_str, "a");
@@ -331,12 +343,24 @@ void draw_detections_v3(image im, detection *dets, int num, float thresh, char *
         printf("%s: %.0f%%", names[best_class],    selected_detections[i].det.prob[best_class] * 100);
 
         // print bounding box coordinates
-        printf("\t(left_x: %4.0f   top_y: %4.0f   width: %4.0f   height: %4.0f)-",
+        printf("\t(left_x: %4.0f   top_y: %4.0f   width: %4.0f   height: %4.0f)",
                 round((selected_detections[i].det.bbox.x - selected_detections[i].det.bbox.w / 2)*im.w),
                 round((selected_detections[i].det.bbox.y - selected_detections[i].det.bbox.h / 2)*im.h),
                 round(selected_detections[i].det.bbox.w*im.w), round(selected_detections[i].det.bbox.h*im.h));
 
-        // save bounding box coordinates to a file
+        // save bounding box coordinates to a file (same name with image)
+	if(save_file_out){
+        	fprintf(save_file_out,"%s: %.0f%%", names[best_class], selected_detections[i].det.prob[best_class] * 100);
+	        fprintf(save_file_out," (left_x:%4.0f,top_y:%4.0f,right_x:%4.0f,bottom_y:%4.0f)",
+                	round((selected_detections[i].det.bbox.x - selected_detections[i].det.bbox.w / 2)*im.w),
+                	round((selected_detections[i].det.bbox.y - selected_detections[i].det.bbox.h / 2)*im.h),
+              	 	round((selected_detections[i].det.bbox.x + selected_detections[i].det.bbox.w / 2)*im.w),
+                	round((selected_detections[i].det.bbox.y + selected_detections[i].det.bbox.h / 2)*im.h)
+        	);
+		fprintf(save_file_out, "%s", "\n");    
+	}
+
+	// save bounding box coordinates to a file (detections.txt)
         fprintf(file_out,"%s: %.0f%%", names[best_class], selected_detections[i].det.prob[best_class] * 100);
         fprintf(file_out," (left_x:%4.0f,top_y:%4.0f,right_x:%4.0f,bottom_y:%4.0f)-",
                 round((selected_detections[i].det.bbox.x - selected_detections[i].det.bbox.w / 2)*im.w),
@@ -344,7 +368,7 @@ void draw_detections_v3(image im, detection *dets, int num, float thresh, char *
                 round((selected_detections[i].det.bbox.x + selected_detections[i].det.bbox.w / 2)*im.w),
                 round((selected_detections[i].det.bbox.y + selected_detections[i].det.bbox.h / 2)*im.h)
         );
-    
+
 
 
         if (ext_output)
@@ -371,10 +395,12 @@ void draw_detections_v3(image im, detection *dets, int num, float thresh, char *
     }
 
     // after detection is done for an image get to a new line and close the file
+   if(save_file_out){
+        fclose(save_file_out);
+    }
+
     fprintf(file_out, "%s", "\n");
     fclose(file_out);
-
-
 
 
 

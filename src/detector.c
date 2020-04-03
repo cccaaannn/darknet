@@ -18,6 +18,8 @@ typedef __compar_fn_t comparison_fn_t;
 
 #include "http_stream.h"
 
+#include <libgen.h>
+
 int check_mistakes = 0;
 
 static int coco_ids[] = { 1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,23,24,25,27,28,31,32,33,34,35,36,37,38,39,40,41,42,43,44,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,67,70,72,73,74,75,76,77,78,79,80,81,82,84,85,86,87,88,89,90 };
@@ -1548,8 +1550,10 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
             input = fgets(input, 256, stdin);
             if (!input) break;
             strtok(input, "\n");
-        }
-        //image im;
+        }    
+        
+
+	    //image im;
         //image sized = load_image_resize(input, net.w, net.h, net.c, &im);
         image im = load_image(input, 0, 0, net.c);
         image sized;
@@ -1576,7 +1580,12 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
             if (l.nms_kind == DEFAULT_NMS) do_nms_sort(dets, nboxes, l.classes, nms);
             else diounms_sort(dets, nboxes, l.classes, nms, l.nms_kind, l.beta_nms);
         }
-        draw_detections_v3(im, dets, nboxes, thresh, names, alphabet, l.classes, ext_output);
+	
+	    //get basename for saving
+	    char* only_the_filename = basename(input);
+	    draw_and_save_detections(im, dets, nboxes, thresh, names, alphabet, l.classes, ext_output, only_the_filename);
+        //draw_detections_v3(im, dets, nboxes, thresh, names, alphabet, l.classes, ext_output);
+
         save_image(im, "predictions");
         if (!dont_show) {
             show_image(im, "predictions");
